@@ -33,6 +33,6 @@ TranslateInitForLoweredUDT(llvm::Constant *Init, llvm::Type *NewTy,
                            hlsl::DxilTypeSystem *pTypeSys,
                            hlsl::MatrixOrientation matOrientation =
                                hlsl::MatrixOrientation::Undefined);
-void ReplaceUsesForLoweredUDT(llvm::Value *V, llvm::Value *NewV);
+bool ReplaceUsesForLoweredUDT(llvm::Value *V, llvm::Value *NewV);
 
 } // namespace hlsl

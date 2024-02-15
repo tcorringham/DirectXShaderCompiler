@@ -178,7 +178,10 @@ hlsl::TranslateInitForLoweredUDT(Constant *Init, Type *NewTy,
   return Init;
 }
 
-void hlsl::ReplaceUsesForLoweredUDT(Value *V, Value *NewV) {
+// We return true if a getelementptr was merged, so that we can avoid
+// referencing the instruction as it will have been deleted.
+bool hlsl::ReplaceUsesForLoweredUDT(Value *V, Value *NewV) {
+  bool merged = false;
   Type *Ty = V->getType();
   Type *NewTy = NewV->getType();
 
@@ -188,7 +191,7 @@ void hlsl::ReplaceUsesForLoweredUDT(Value *V, Value *NewV) {
       I->dropAllReferences();
     if (Constant *CV = dyn_cast<Constant>(V))
       CV->removeDeadConstantUsers();
-    return;
+    return merged;
   }
 
   DXASSERT_NOMSG(Ty->isPointerTy() && NewTy->isPointerTy());
@@ -255,8 +258,12 @@ void hlsl::ReplaceUsesForLoweredUDT(Value *V, Value *NewV) {
       IRBuilder<> Builder(GEP);
       SmallVector<Value *, 4> idxList(GEP->idx_begin(), GEP->idx_end());
       Value *NewGEP = Builder.CreateGEP(NewV, idxList);
-      ReplaceUsesForLoweredUDT(GEP, NewGEP);
-      dxilutil::MergeGepUse(NewGEP);
+      merged = ReplaceUsesForLoweredUDT(GEP, NewGEP);
+      // If the replace merged GEPs then NewGEP will now be invalid, so
+      // don't attempt to merge it.
+      if (!merged) {
+        merged = dxilutil::MergeGepUse(NewGEP);
+      }
       GEP->eraseFromParent();
 
     } else if (GEPOperator *GEP = dyn_cast<GEPOperator>(user)) {
@@ -474,4 +481,5 @@ void hlsl::ReplaceUsesForLoweredUDT(Value *V, Value *NewV) {
     if (Constant *CV = dyn_cast<Constant>(V))
       CV->removeDeadConstantUsers();
   }
+  return merged;
 }

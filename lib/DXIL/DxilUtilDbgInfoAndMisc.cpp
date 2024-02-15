@@ -154,10 +154,12 @@ static Value *TryMegeWithNestedGEP(GEPOperator *GEP) {
     return FailedToMerge;
 
   // Delete the nested gep and addrspacecast if no more users.
-  if (AsCast && AsCast->user_empty() && isa<AddrSpaceCastInst>(AsCast))
+  if (AsCast && AsCast->user_empty() && isa<AddrSpaceCastInst>(AsCast) &&
+      cast<AddrSpaceCastInst>(AsCast)->getParent())
     cast<AddrSpaceCastInst>(AsCast)->eraseFromParent();
 
-  if (prevGEP->user_empty() && isa<GetElementPtrInst>(prevGEP))
+  if (prevGEP->user_empty() && isa<GetElementPtrInst>(prevGEP) &&
+      cast<GetElementPtrInst>(prevGEP)->getParent())
     cast<GetElementPtrInst>(prevGEP)->eraseFromParent();
 
   return newGEP;
