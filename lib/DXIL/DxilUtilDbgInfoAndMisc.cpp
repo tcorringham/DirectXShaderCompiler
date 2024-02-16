@@ -180,7 +180,7 @@ bool MergeGepUse(Value *V) {
       // This makes it equivalent to recursive traversal
       size_t start = worklist.size();
       worklist.append(V->user_begin(), V->user_end());
-      size_t end = worklist.size();
+      size_t end = worklist.size() - 1;
       std::reverse(worklist.data() + start, worklist.data() + end);
     }
   };
